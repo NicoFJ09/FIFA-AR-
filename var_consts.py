@@ -32,7 +32,25 @@ selected_option = "MAIN MENU"
 volume = True
 game_section = "intro"
 music_playing = True
+
 #Index management 
 Initial_entry = True
 Home_options = ["START", "GAME INFO", "TOP PLAYERS", "ABOUT"]
 Info_options = ["1/3", "2/3", "3/3"]
+
+#Gameplay constants
+
+selected_team =""
+
+Gamemode_options = ["MANUAL", "AUTOMATIC"]
+selected_gamemode = ""
+
+game_position_index = 0
+
+players_selection_text = ""
+game_change_ready = False
+game_positions = {
+    "Shooter1":"",
+    "Shooter2":"",
+    "Goalee":""
+}

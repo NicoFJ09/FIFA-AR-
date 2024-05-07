@@ -277,7 +277,7 @@ def main():
                 selected_gamemode = Gamemode_options[selected_index]
                 if selected_gamemode == "MANUAL":
                     current_screen = "PLAYERS_SELECT"
-                    selected_index = 0
+                    selected_index = 1
                     time.sleep(0.1)
                 elif selected_gamemode == "AUTOMATIC":
                     current_screen = "MAIN_GAME"

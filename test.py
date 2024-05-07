@@ -1,14 +1,10 @@
 
 import serial
 
-
-
-
-
 Rpi = serial.Serial(port = "COM8", baudrate=115200)
 #Rpi.open()
 try:
-    Rpi.Open()
+    Rpi.open()
     print("Conectado")
 except:
     if (Rpi.isOpen):

@@ -74,4 +74,3 @@ def players_select_screen(screen, Hfont, font, Mbackground, Ubackground, team_sp
         pygame.draw.rect(player, outline_color, selected_player_rect, outline_width)
 
     screen.blit(player, player_rect)
-    pygame.display.flip()

@@ -1,6 +1,9 @@
 RUNNING = True
 start_time = 0
 seconds = 0
+#RECIEVED RASPBERRY PI VALUES
+data = 0
+prev_pot_value=0
 
 #Colors
 WHITE=(255,255,255)

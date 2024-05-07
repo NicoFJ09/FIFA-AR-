@@ -43,4 +43,3 @@ def team_select_screen(screen, font, Mbackground, Ubackground, team_sprites, sel
 
 
     screen.blit(invisible_rectangle, invisible_rectangle_rect)
-    pygame.display.flip()

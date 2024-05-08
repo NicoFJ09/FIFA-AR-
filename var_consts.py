@@ -1,6 +1,9 @@
 RUNNING = True
 start_time = 0
 seconds = 0
+Main_game_time = 0
+first_enter = True
+transition_duration = 2
 #RECIEVED RASPBERRY PI VALUES
 data = 0
 prev_pot_value=0

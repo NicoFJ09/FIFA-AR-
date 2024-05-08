@@ -25,6 +25,8 @@ def update_timer(start_time):
     
     return seconds
 #==================================================== SCREEN IMPORTS =============================
+#Home screens imports
+
 from Home_Screens.home import home_screen
 from Home_Screens.start import start_screen
 from Home_Screens.info import info_screen
@@ -34,7 +36,9 @@ from Home_Screens.team_select import team_select_screen
 from Home_Screens.gamemode_select import gamemode_select_screen
 from Home_Screens.players_select import players_select_screen
 
-#==================================================== ASSET IMPORTS ==============================
+#Game screens imports
+from Game_Screens.pregame import pregame_screen
+#==================================================== HOME ASSET IMPORTS ==============================
 
 #Screen backgrounds
 Hbackground = pygame.transform.scale(pygame.image.load("Assets/Backgrounds/Home_BG.png").convert_alpha(), (HWIDTH,HHEIGHT))
@@ -52,8 +56,12 @@ About = pygame.transform.scale(pygame.image.load("Assets/Backgrounds/About.png")
 Gamemode_description = pygame.transform.scale(pygame.image.load("Assets/Backgrounds/Gamemode.png").convert_alpha(), (PAGE_WIDTH,PAGE_HEIGHT))
 
 #Sprites
+
+#Volume sprites
 On_volume = pygame.transform.scale(pygame.image.load("Assets/Sprites/ON.png").convert_alpha(), (110,80))
 Off_volume = pygame.transform.scale(pygame.image.load("Assets/Sprites/OFF.png").convert_alpha(), (110,80))
+volume_icon = On_volume
+volume_rect = volume_icon.get_rect(topleft=(10, 10))  # Adjust position as needed
 
 #Equipos
 team1 = pygame.transform.scale(pygame.image.load("Assets/Sprites/team1.png").convert_alpha(), (170,200))
@@ -78,6 +86,10 @@ team_sprites = {
     "LSD": [team3, [team3p1, "Stalin"], [team3p2, "Andrew Tate"], [team3p3, "Agüero Melo"]]  # List of lsd sprites
 }
 
+# ============================================================= MAIN GAME ASSET IMPORTS ==========================================================
+Field_frontal = pygame.transform.scale(pygame.image.load("Assets/Backgrounds/Field_frontal.png").convert_alpha(), (HWIDTH,HHEIGHT))
+Field_lateral = pygame.transform.scale(pygame.image.load("Assets/Backgrounds/Field_lateral.png").convert_alpha(), (HWIDTH,HHEIGHT))
+Field_drone = pygame.transform.scale(pygame.image.load("Assets/Backgrounds/Field_drone.png").convert_alpha(), (HWIDTH,HHEIGHT))
 
 #Soundtrack
 Intro_Track = "Assets/Soundtrack/Intro_Track.mp3"
@@ -89,7 +101,7 @@ pygame.mixer.music.play(-1)  # -1 loops indefinitely
 Hfont = pygame.font.Font("Assets/Font/PressStart2P.ttf",30)
 Nfont = pygame.font.Font("Assets/Font/PressStart2P.ttf",15)
 
-#=================================================== CHECK RASPBERRY PI DETECTION =======================
+#=================================================== CHECK RASPBERRY PI DETECTION ====================================
 
 serial_port = "COM8"
 baud_rate = 115200
@@ -114,8 +126,6 @@ def is_potentiometer_value(value):
         return 0 <= pot_value <= 65535
     except ValueError:
         return False
-
-
 
 
 #============================================= TOP SHOOTER SCORES ======================================
@@ -145,7 +155,7 @@ def update_top_scores(final_score):
 #====================================================== MAIN CODE ========================================
 
 def main():
-    global selected_index, current_screen, volume, music_playing, game_section, prev_game_section, seconds, selected_team, selected_gamemode, game_positions, game_position_index, players_selection_text, game_change_ready, data, prev_pot_value
+    global selected_index, current_screen, volume, music_playing, game_section, prev_game_section, seconds, selected_team, selected_gamemode, game_positions, game_position_index, players_selection_text, game_change_ready, data, prev_pot_value, volume_rect, volume_icon, first_enter
     
     try:
         ser = serial.Serial(serial_port, baud_rate)
@@ -197,14 +207,12 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
 
-            volume_icon = On_volume if volume else Off_volume
-            volume_rect = volume_icon.get_rect(topleft=(10, 10))  # Adjust position as needed
-            #Universal volume toggle
 
-        if event.type == pygame.KEYDOWN:
-            
-            if event.key == pygame.K_m:
-                volume = not volume
+        if not is_potentiometer_value(data) and data == "VOLUME_TOGGLE":
+              volume = not volume
+              volume_icon = On_volume if volume else Off_volume
+              volume_rect = volume_icon.get_rect(topleft=(10, 10))  # Adjust position as needed
+              time.sleep(0.1)
 
             # ======================= HOME SCREEN CONTROLS =======================================
         if current_screen == "HOME":
@@ -280,7 +288,7 @@ def main():
                     selected_index = 1
                     time.sleep(0.1)
                 elif selected_gamemode == "AUTOMATIC":
-                    current_screen = "MAIN_GAME"
+                    current_screen = "PRE_GAME"
                     selected_index = 0
                     time.sleep(0.1)
 
@@ -291,7 +299,6 @@ def main():
                     # Adjust the selected index based on the potentiometer value
                     selected_index = min(index_map(current_pot_value, len(team_sprites[selected_team])) + 1, len(team_sprites[selected_team]))  # Ensure it starts from 1
                     selected_index = min(selected_index, 3)
-                    print(selected_index)
                     prev_pot_value = current_pot_value  # Update the previous potentiometer value
             elif data == "BUTTON_PRESS" and not game_change_ready:
                 time.sleep(0.1)
@@ -316,7 +323,7 @@ def main():
                         game_change_ready = True
                 
             elif data == "BUTTON_PRESS" and game_change_ready:
-                current_screen = "MAIN_GAME"
+                current_screen = "PRE_GAME"
                 selected_index = 0
                 time.sleep(0.1)
 
@@ -349,7 +356,7 @@ def main():
         elif current_screen == "START":
             game_section = "gameplay"
             start_screen(screen, Hfont, HWIDTH, HHEIGHT)
-            if seconds>2:
+            if seconds>1.5:
                 current_screen = "TEAM_SELECT"
 
         elif current_screen == "TEAM_SELECT":
@@ -360,11 +367,12 @@ def main():
             gamemode_select_screen(screen, Hfont, Mbackground, Ubackground, Gamemode_description, Gamemode_options, selected_index)
             screen.blit(volume_icon, volume_rect)
 
-        elif current_screen =="PLAYERS_SELECT":
+        elif current_screen == "PLAYERS_SELECT":
             players_select_screen(screen, Hfont, Nfont, Mbackground, Ubackground, team_sprites, selected_index,selected_team, players_selection_text)
             screen.blit(volume_icon, volume_rect)
-        elif current_screen =="MAIN_GAME":
-            start_screen(screen, Hfont, HWIDTH, HHEIGHT)
+            
+        elif current_screen == "PRE_GAME":
+            pregame_screen(screen, Hfont, Field_drone, Field_lateral, Ubackground, seconds)
         
         
         # Update the display and cap the frame rate

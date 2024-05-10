@@ -2,6 +2,7 @@ import pygame
 import serial
 import threading
 import time
+import random
 import sys
 sys.path.append('../')
 import os
@@ -21,7 +22,7 @@ def update_timer(start_time):
     game_time = pygame.time.get_ticks() - start_time
     
     # Convert game time to seconds
-    seconds = game_time // 1000
+    seconds = game_time / 1000
     
     return seconds
 #==================================================== SCREEN IMPORTS =============================
@@ -38,6 +39,8 @@ from Home_Screens.players_select import players_select_screen
 
 #Game screens imports
 from Game_Screens.pregame import pregame_screen
+from Game_Screens.game_constants import game_constants_screen
+from Game_Screens.game_loop import gameloop_screen
 #==================================================== HOME ASSET IMPORTS ==============================
 
 #Screen backgrounds
@@ -91,15 +94,28 @@ Field_frontal = pygame.transform.scale(pygame.image.load("Assets/Backgrounds/Fie
 Field_lateral = pygame.transform.scale(pygame.image.load("Assets/Backgrounds/Field_lateral.png").convert_alpha(), (HWIDTH,HHEIGHT))
 Field_drone = pygame.transform.scale(pygame.image.load("Assets/Backgrounds/Field_drone.png").convert_alpha(), (HWIDTH,HHEIGHT))
 
+#Sprites
+coin_gif = pygame.transform.scale(pygame.image.load("Assets/Sprites/Coin_animation.gif").convert_alpha(), (300,300))
+corona = pygame.transform.scale(pygame.image.load("Assets/Sprites/Corona.gif").convert_alpha(), (300,300))
+escudo = pygame.transform.scale(pygame.image.load("Assets/Sprites/Escudo.gif").convert_alpha(), (300,300))
+Bola_1 = pygame.transform.scale(pygame.image.load("Assets/Sprites/Brazuka.png").convert_alpha(), (160,160))
+Bola_2 = pygame.transform.scale(pygame.image.load("Assets/Sprites/Brazuka_rotate.png").convert_alpha(), (160,160))
+Goalee=  pygame.transform.scale(pygame.image.load("Assets/Sprites/Stood_goalee.png").convert_alpha(), (162.5,235))
+Goalee_left= pygame.transform.scale(pygame.image.load("Assets/Sprites/Goal_keeper_left.png").convert_alpha(), (282,120))
+Goalee_right= pygame.transform.scale(pygame.image.load("Assets/Sprites/Goal_keeper_right.png").convert_alpha(), (282,120))
+
 #Soundtrack
 Intro_Track = "Assets/Soundtrack/Intro_Track.mp3"
 Game_Track = "Assets/Soundtrack/Game_Track.mp3"
+
 pygame.mixer.music.load(Intro_Track)
 pygame.mixer.music.play(-1)  # -1 loops indefinitely
 
 #Font
 Hfont = pygame.font.Font("Assets/Font/PressStart2P.ttf",30)
+Gfont = pygame.font.Font("Assets/Font/PressStart2P.ttf",22)
 Nfont = pygame.font.Font("Assets/Font/PressStart2P.ttf",15)
+Titlefont = pygame.font.Font("Assets/Font/PressStart2P.ttf",60)
 
 #=================================================== CHECK RASPBERRY PI DETECTION ====================================
 
@@ -152,21 +168,11 @@ def update_top_scores(final_score):
         for score in scores:
             file.write(str(score) + '\n')
 
+
 #====================================================== MAIN CODE ========================================
 
 def main():
-    global selected_index, current_screen, volume, music_playing, game_section, prev_game_section, seconds, selected_team, selected_gamemode, game_positions, game_position_index, players_selection_text, game_change_ready, data, prev_pot_value, volume_rect, volume_icon, first_enter
-    
-    try:
-        ser = serial.Serial(serial_port, baud_rate)
-        print("Serial port connected")
-    except Exception as e:
-        print(f"Error opening serial port: {e}")
-        return
-    
-    # Create and start serial reader thread
-    serial_thread = threading.Thread(target=serial_reader, args=(ser,), daemon=True)
-    serial_thread.start()
+    global selected_index, current_screen, volume, music_playing, game_section, prev_game_section, seconds, selected_team, enemy_team, selected_gamemode, game_positions, final_player_list, game_position_index, players_selection_text, game_change_ready, data, prev_pot_value, volume_rect, volume_icon, first_enter, team_player_index, enemy_player_index, current_round, selected_option, shoot
 
     while RUNNING:
         # Check Music Toggle Option
@@ -206,128 +212,125 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-
-
-        if not is_potentiometer_value(data) and data == "VOLUME_TOGGLE":
-              volume = not volume
-              volume_icon = On_volume if volume else Off_volume
-              volume_rect = volume_icon.get_rect(topleft=(10, 10))  # Adjust position as needed
-              time.sleep(0.1)
-
-            # ======================= HOME SCREEN CONTROLS =======================================
-        if current_screen == "HOME":
-            if is_potentiometer_value(data):
-                current_pot_value = int(data)
-                # Check if the current potentiometer value is different from the previous one
-                if current_pot_value != prev_pot_value:
-                    selected_index = index_map(current_pot_value, len(Home_options))
-                    prev_pot_value = current_pot_value  # Update the previous potentiometer value
-            elif data == "BUTTON_PRESS":
-                current_screen = Home_options[selected_index]
-                selected_index = 0
-                time.sleep(0.1)
-
-        # ======================= GAME INFO CONTROLS =======================================
-        elif current_screen == "GAME INFO":
-            if is_potentiometer_value(data):
-                current_pot_value = int(data)
-                # Check if the current potentiometer value is different from the previous one
-                if current_pot_value != prev_pot_value:
-                    selected_index = index_map(current_pot_value, len(Info_options))
-                    prev_pot_value = current_pot_value  # Update the previous potentiometer value
-            elif data == "BUTTON_PRESS":
-                current_screen = "HOME"
-                selected_index = 0
-                time.sleep(0.1)
-
-        # ======================= TOP PLAYERS CONTROLS =======================================
-
-        elif current_screen == "TOP PLAYERS":
-            if data == "BUTTON_PRESS":
-                current_screen = "HOME"
-                selected_index = 0
-                time.sleep(0.1)
-
-        # ======================= ABOUT CONTROLS =======================================
-        elif current_screen == "ABOUT":
-            if data == "BUTTON_PRESS":
-                current_screen = "HOME"
-                selected_index = 0
-                time.sleep(0.1)
-
-
-        # ======================= TEAM SELECT CONTROLS =======================================
-        elif current_screen == "TEAM_SELECT":
-            if is_potentiometer_value(data):
-                current_pot_value = int(data)
-                # Check if the current potentiometer value is different from the previous one
-                if current_pot_value != prev_pot_value:
-                    selected_index = index_map(current_pot_value, len(team_sprites))
-                    prev_pot_value = current_pot_value  # Update the previous potentiometer value
-            elif data == "BUTTON_PRESS":
-                selected_key = list(team_sprites.keys())[selected_index]
-                selected_team = selected_key
-                current_screen = "GAMEMODE_SELECT"
-                selected_index = 0
-                time.sleep(0.1)
-
-        # ======================= GAMEMODE SELECT CONTROLS: MANUAL OR AUTOMATIC=======================================
-        elif current_screen == "GAMEMODE_SELECT":
-
-            if is_potentiometer_value(data):
-                current_pot_value = int(data)
-                # Check if the current potentiometer value is different from the previous one
-                if current_pot_value != prev_pot_value:
-                    selected_index = index_map(current_pot_value, len(Gamemode_options))
-                    prev_pot_value = current_pot_value  # Update the previous potentiometer value
-
-            elif data == "BUTTON_PRESS":
-                selected_gamemode = Gamemode_options[selected_index]
-                if selected_gamemode == "MANUAL":
-                    current_screen = "PLAYERS_SELECT"
-                    selected_index = 1
-                    time.sleep(0.1)
-                elif selected_gamemode == "AUTOMATIC":
-                    current_screen = "PRE_GAME"
-                    selected_index = 0
-                    time.sleep(0.1)
-
-        elif current_screen == "PLAYERS_SELECT":
-            if is_potentiometer_value(data):
-                current_pot_value = int(data)
-                if current_pot_value != prev_pot_value:
-                    # Adjust the selected index based on the potentiometer value
-                    selected_index = min(index_map(current_pot_value, len(team_sprites[selected_team])) + 1, len(team_sprites[selected_team]))  # Ensure it starts from 1
-                    selected_index = min(selected_index, 3)
-                    prev_pot_value = current_pot_value  # Update the previous potentiometer value
-            elif data == "BUTTON_PRESS" and not game_change_ready:
-                time.sleep(0.1)
-                # Get the player name
-                selected_player = team_sprites[selected_team][selected_index ][1]
-
-                # Check if the player is already assigned to a position
-                if selected_player in game_positions.values():
-                    players_selection_text = f"{selected_player} is already assigned to a position."
-                else:
-                    # Assign the player to the current position
-                    positions = list(game_positions.keys())
-                    position = positions[game_position_index]
-                    game_positions[position] = selected_player
-                    
-                    # Move to the next position index
-                    game_position_index = (game_position_index + 1) % len(game_positions)
-
-                    players_selection_text = f"Assigned {selected_player} to {position}"
-                    # Check if all positions are assigned
-                    if game_position_index == 0:
-                        game_change_ready = True
+            #Universal volume toggle
+            if event.type == pygame.KEYDOWN:
                 
-            elif data == "BUTTON_PRESS" and game_change_ready:
-                current_screen = "PRE_GAME"
-                selected_index = 0
-                time.sleep(0.1)
+                if event.key == pygame.K_m:
+                    volume = not volume
+            # Home screen controls
+                elif current_screen == "HOME":
+                    
+                    if event.key == pygame.K_UP or event.key == pygame.K_w:
+                        selected_index = (selected_index - 1) % len(Home_options)
+                    elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                        selected_index = (selected_index + 1) % len(Home_options)
+                    elif event.key == pygame.K_RETURN:
+                        current_screen = Home_options[selected_index]
+                        selected_index = 0
+                # Game info controls
+                elif current_screen == "GAME INFO":
+                    
+                    if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                        selected_index = (selected_index + 1) % len(Info_options)
+                    elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                        selected_index = (selected_index - 1) % len(Info_options)
+                    elif event.key == pygame.K_RETURN:
+                        current_screen = "HOME"
+                        selected_index = 0
+                # Top_scores controls
+                elif current_screen == "TOP PLAYERS":
+                    
+                    if event.key == pygame.K_RETURN:
+                        current_screen = "HOME"
+                        selected_index = 0
+                # About controls
+                elif current_screen == "ABOUT":
+                    
+                    if event.key == pygame.K_RETURN:
+                        current_screen = "HOME"
+                        selected_index = 0
 
+                # Team select controls
+                elif current_screen == "TEAM_SELECT":
 
+                    if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                        selected_index = (selected_index + 1) % len(team_sprites)
+                    elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                        selected_index = (selected_index - 1) % len(team_sprites)
+                    elif event.key == pygame.K_RETURN:
+                        selected_key = list(team_sprites.keys())[selected_index]
+                        selected_team = selected_key
+                        enemy_options = list(team_sprites.keys())
+                        enemy_options.remove(selected_team)
+                        enemy_team = random.choice(enemy_options)
+                        enemy_player_list = [team_sprites[enemy_team][1][1],team_sprites[enemy_team][2][1], team_sprites[enemy_team][3][1]]
+                        current_screen = "GAMEMODE_SELECT"
+                        selected_index = 0
+
+                # Gamemode select controls: manual or automatic
+                elif current_screen == "GAMEMODE_SELECT":
+
+                    if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                        selected_index = (selected_index + 1) % len(Gamemode_options)
+                    elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                        selected_index = (selected_index - 1) % len(Gamemode_options)
+                    elif event.key == pygame.K_RETURN:
+                        selected_gamemode = Gamemode_options[selected_index]
+                        if selected_gamemode == "MANUAL":
+                            current_screen = "PLAYERS_SELECT"
+                            selected_index = 1
+                        elif selected_gamemode == "AUTOMATIC":
+                            final_player_list = [team_sprites[selected_team][1][1],team_sprites[selected_team][2][1], team_sprites[selected_team][3][1]]
+                            current_screen = "PRE_GAME"
+                            selected_index = 0
+
+                elif current_screen == "PLAYERS_SELECT":
+                    if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                        selected_index = min(selected_index + 1, len(team_sprites[selected_team]) - 1)
+                    elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                        selected_index = max(selected_index - 1, 1)
+                    elif event.key == pygame.K_RETURN and not game_change_ready:
+                        # Get the player name
+                        selected_player = team_sprites[selected_team][selected_index][1]
+
+                        # Check if the player is already assigned to a position
+                        if selected_player in game_positions.values():
+                            players_selection_text = f"Player {selected_player} is already assigned to a position."
+                        else:
+                            # Assign the player to the current position
+                            positions = list(game_positions.keys())
+                            position = positions[game_position_index]
+                            game_positions[position] = selected_player
+                            final_player_list.append(selected_player)
+                            # Move to the next position index
+                            game_position_index = (game_position_index + 1) % len(game_positions)
+
+                            players_selection_text = f"Assigned {selected_player} to {position}"
+                            # Check if all positions are assigned
+                            if game_position_index == 0:
+                                game_change_ready = True
+
+                    elif event.key == pygame.K_RETURN and game_change_ready:
+                        current_screen = "PRE_GAME"
+
+                if current_screen == "MAIN_GAME" and not shoot:
+                    if Shootturn == "YOU":
+                        if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                            selected_index = (selected_index + 1) % len(goal_positions)
+                        elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                            selected_index = (selected_index - 1) % len(goal_positions)
+                        elif event.key == pygame.K_RETURN:
+                            selected_option = goal_positions[selected_index]
+                            shoot = True
+
+                    if Shootturn == "ENEMY" and not shoot:
+                        if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                            selected_index = (selected_index + 1) % len(Defense_options)
+                        elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                            selected_index = (selected_index - 1) % len(Defense_options)
+                        elif event.key == pygame.K_RETURN:
+                            selected_option = Defense_options[selected_index]
+                            shoot = True
 
 
         # ========================================= CURRENT SCREEN RENDERING =============================================
@@ -358,6 +361,7 @@ def main():
             start_screen(screen, Hfont, HWIDTH, HHEIGHT)
             if seconds>1.5:
                 current_screen = "TEAM_SELECT"
+                selected_index = 0
 
         elif current_screen == "TEAM_SELECT":
             team_select_screen(screen, Hfont, Mbackground, Ubackground, team_sprites, selected_index)
@@ -372,9 +376,15 @@ def main():
             screen.blit(volume_icon, volume_rect)
             
         elif current_screen == "PRE_GAME":
-            pregame_screen(screen, Hfont, Field_drone, Field_lateral, Ubackground, seconds)
+            Shootturn = pregame_screen(screen, Hfont, Field_drone, Field_lateral, Ubackground,coin_gif, corona, escudo, seconds)
+            if Shootturn == "ENEMY" or Shootturn == "YOU":
+                current_screen = "MAIN_GAME"
+                first_enter = True
+                selected_index = 0
         
-        
+        elif current_screen == "MAIN_GAME":
+            game_constants_screen(screen,Gfont,Nfont, Field_frontal, team_sprites, selected_team, enemy_team, selected_gamemode, final_player_list, enemy_player_list, Shootturn, team_player_index, enemy_player_index, current_round)
+            gameloop_screen(screen,Titlefont,Hfont, selected_gamemode,Bola_1, Bola_2, Goalee, Goalee_left, Goalee_right, Shootturn, seconds, current_round, selected_index, selected_option)
         # Update the display and cap the frame rate
         pygame.display.update()
         clock.tick(60)

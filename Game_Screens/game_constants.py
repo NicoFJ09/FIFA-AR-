@@ -2,6 +2,7 @@ from var_consts import *
 import pygame
 def game_constants_screen(screen,Gfont, Nfont, Field_frontal, team_sprites, selected_team, enemy_team, selected_gamemode, final_player_list, enemy_player_list, Shootturn, team_player_index, enemy_player_index, current_round):
 #Main background
+
     screen.blit(Field_frontal, (0, 0))
 
     #Information box
@@ -34,7 +35,7 @@ def game_constants_screen(screen,Gfont, Nfont, Field_frontal, team_sprites, sele
             goalee_name_text = Nfont.render(f"Goalee name: {enemy_player_list[enemy_player_index]}", True, NAVY_BLUE)
 
         elif Shootturn == "ENEMY":
-            shooter_name_text = Nfont.render(f"Shooter name: {final_player_list[enemy_player_index]}", True, NAVY_BLUE)
+            shooter_name_text = Nfont.render(f"Shooter name: {enemy_player_list[enemy_player_index]}", True, NAVY_BLUE)
             goalee_name_text = Nfont.render(f"Goalee name: {final_player_list[2]}", True, NAVY_BLUE)
 
     elif selected_gamemode== "AUTOMATIC":
@@ -44,7 +45,7 @@ def game_constants_screen(screen,Gfont, Nfont, Field_frontal, team_sprites, sele
             goalee_name_text = Nfont.render(f"Goalee name: {enemy_player_list[enemy_player_index]}", True, NAVY_BLUE)
 
         elif Shootturn == "ENEMY":
-            shooter_name_text = Nfont.render(f"Shooter name: {final_player_list[enemy_player_index]}", True, NAVY_BLUE)
+            shooter_name_text = Nfont.render(f"Shooter name: {enemy_player_list[enemy_player_index]}", True, NAVY_BLUE)
             goalee_name_text = Nfont.render(f"Goalee name: {final_player_list[team_player_index]}", True, NAVY_BLUE)
 
     current_round_text = Gfont.render(f"Round {current_round}", True, WINE_RED)

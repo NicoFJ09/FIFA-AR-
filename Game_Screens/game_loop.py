@@ -3,9 +3,15 @@ import pygame
 import random
 import math
 Whistle = "Assets/Soundtrack/Silbato_sonido.mp3"
+Boo= "Assets/Soundtrack/Buu.mp3"
+Cheer = "Assets/Soundtrack/Goal.mp3"
+
+
 pygame.init()
 pygame.mixer.init()
 whistle_sound = pygame.mixer.Sound(Whistle)
+boo_sound = pygame.mixer.Sound(Boo)
+cheer_sound = pygame.mixer.Sound(Cheer)
 
 
 def draw_target_positions(screen, blocked_positions, COLOR):
@@ -18,12 +24,22 @@ def draw_target_positions(screen, blocked_positions, COLOR):
 
 
 
-def gameloop_screen(screen,Titlefont,Hfont, selected_gamemode, Bola_1, Bola_2, Goalee, Goalee_left, Goalee_right, Shootturn, seconds, current_round, selected_index, selected_option):
-    global first_enter, game_start_time, countdown_time, shoot, blocked_positions, target_position, shot_result, time_elapsed, Random_shot
+def gameloop_screen(screen,Titlefont,Hfont, Bola_1, Goalee, Goalee_left, Goalee_right, Shootturn, seconds, selected_index, selected_option, game_reset):
+    global first_enter, game_start_time, countdown_time, shoot, blocked_positions, target_position, shot_result, time_elapsed, Random_shot, Random_jump, internal_P_points, internal_E_points
     
-    if first_enter:
+
+
+    if first_enter or game_reset:
         game_start_time = seconds
         first_enter =  False
+        shoot = False
+        Random_shot = None
+        blocked_positions= []
+        target_position = None
+        shot_result = ""
+        internal_P_points = 0
+        internal_E_points = 0
+        print("int P" ,internal_P_points, "Int E", internal_E_points)
         
     time_elapsed = seconds - game_start_time
 
@@ -38,7 +54,7 @@ def gameloop_screen(screen,Titlefont,Hfont, selected_gamemode, Bola_1, Bola_2, G
         screen.blit(ready_text, ready_text_rect)
 
 
-    elif time_elapsed < 4:
+    elif time_elapsed >= 1 and time_elapsed < 4:
         # Render and display countdown
         countdown_time = 3 - math.floor(time_elapsed - 1)
         countdown_text = str(countdown_time)
@@ -48,8 +64,8 @@ def gameloop_screen(screen,Titlefont,Hfont, selected_gamemode, Bola_1, Bola_2, G
         screen.blit(countdown_surface, countdown_rect)
 
     elif Shootturn == "YOU":
-
-        if time_elapsed < 5:
+        
+        if time_elapsed >= 4 and time_elapsed < 5:
             
             # Render and display "SHOOT" message
             shoot_text = Titlefont.render("SHOOT", True, WINE_RED)
@@ -61,7 +77,7 @@ def gameloop_screen(screen,Titlefont,Hfont, selected_gamemode, Bola_1, Bola_2, G
 
 
         #PRE SHOT PREPARATION 
-        elif time_elapsed < 9.5:
+        elif time_elapsed >= 5 and time_elapsed < 8.5:
 
             for index, (x, y, width, height) in enumerate(goal_positions):
                 position_rect = pygame.Rect(x, y, width, height)
@@ -90,17 +106,14 @@ def gameloop_screen(screen,Titlefont,Hfont, selected_gamemode, Bola_1, Bola_2, G
 
         #WHAT HAPPENS AFTER THE SHOT
 
-        elif time_elapsed < 10:
-            if selected_option == None:
-                time_elapsed +=3.8
-
+        elif time_elapsed >= 8.5 and time_elapsed < 9:
             if selected_index<3:
                 screen.blit(Goalee_left, jump_rect)
                 
             elif selected_index>=3:
                 screen.blit(Goalee_right, jump_rect)
 
-        elif time_elapsed < 11:
+        elif time_elapsed >= 9 and time_elapsed < 10:
             
             if shoot:
                 target_position = (
@@ -120,12 +133,12 @@ def gameloop_screen(screen,Titlefont,Hfont, selected_gamemode, Bola_1, Bola_2, G
 
         #BALL MOVEMENT MANAGEMENT
 
-        elif time_elapsed >= 11 and time_elapsed < 13:
-            if target_position is not None:
+        elif time_elapsed >= 10 and time_elapsed < 12:
+            if target_position is not None and selected_option is not None:
                 draw_target_positions(screen, blocked_positions, VIOLET_SEMITRANSPARENT)
                 draw_target_positions(screen, [selected_option], WINE_RED_SEMITRANSPARENT)
                 # Calculate fractional part of elapsed time
-                fractional_time = time_elapsed - 12
+                fractional_time = time_elapsed - 11
                 
                 # Calculate current position based on elapsed time and interpolate
                 current_pos = (
@@ -135,13 +148,17 @@ def gameloop_screen(screen,Titlefont,Hfont, selected_gamemode, Bola_1, Bola_2, G
                 # Draw the ball sprite at the current position
                 screen.blit(Bola_1, current_pos)
 
-        elif time_elapsed <13.5:
+        elif time_elapsed >= 12 and time_elapsed <12.5:
             if selected_option in blocked_positions or selected_option == None :
                 # Display "Failed" text in the middle of the screen using Titlefont
                 failed_text = Titlefont.render("MISS!", True, WINE_RED)
                 failed_text_rect = failed_text.get_rect(center=(HWIDTH//2, HHEIGHT // 2))
                 screen.blit(failed_text, failed_text_rect)
                 shot_result = "MISS"
+                if shoot == False:
+                    boo_sound.play()
+                    shoot = True
+                    internal_P_points = 0
 
             else:
                 # Display "Goal" text in the middle of the screen using Titlefont
@@ -149,13 +166,16 @@ def gameloop_screen(screen,Titlefont,Hfont, selected_gamemode, Bola_1, Bola_2, G
                 goal_text_rect = goal_text.get_rect(center=(HWIDTH//2, HHEIGHT // 2))
                 screen.blit(goal_text, goal_text_rect)
                 shot_result = "GOAL"
+                if shoot == False:
+                    cheer_sound.play()
+                    shoot = True
+                    internal_P_points = 1
         
-        elif time_elapsed<14:
-            
-            print("Show public")
+        elif time_elapsed >= 12.5 and time_elapsed <13:
+            return ["switch", internal_P_points, internal_E_points]
 
     elif Shootturn == "ENEMY":
-        if time_elapsed < 5:
+        if time_elapsed >= 4 and time_elapsed < 5:
             
             # Render and display "SHOOT" message
             shoot_text = Titlefont.render("DEFEND", True, WINE_RED)
@@ -165,8 +185,8 @@ def gameloop_screen(screen,Titlefont,Hfont, selected_gamemode, Bola_1, Bola_2, G
             whistle_sound.play()
 
     # PRE DEFENSE PREPARATION 
-        elif time_elapsed < 9.5:
-            Options_title = Hfont.render("SELECT YOUR DEFENSE PATTERN", True, WINE_RED)
+        elif time_elapsed >= 5 and time_elapsed < 8.5:
+            Options_title = Hfont.render("SELECT YOUR DEFENSE PATTERN", True, OVERLAY_GRAY)
             Options_title_rect = Options_title.get_rect(center=(HWIDTH//2, 150))
             screen.blit(Goalee, goalee_rect)
             screen.blit(Options_title, Options_title_rect)
@@ -178,7 +198,7 @@ def gameloop_screen(screen,Titlefont,Hfont, selected_gamemode, Bola_1, Bola_2, G
 
             for i, option in enumerate(Defense_options):
                 # Render the text using the Titlefont
-                option_text = Hfont.render(option, True, NAVY_BLUE if selected_index == i and shoot== False else WINE_RED)
+                option_text = Hfont.render(option, True, WINE_RED if selected_index == i and shoot== False else OVERLAY_GRAY)
                 # Get the rectangle for the rendered text
                 option_rect = option_text.get_rect()
                 # Set the top-left corner of the rectangle to the current coordinates
@@ -193,11 +213,7 @@ def gameloop_screen(screen,Titlefont,Hfont, selected_gamemode, Bola_1, Bola_2, G
                     # Print the value of the defense option
                     shoot = True
 
-        #elif time_elapsed < 10:
-         #   if selected_option == None:
-          #      time_elapsed +=3.8     
-
-        elif time_elapsed >= 9.5 and time_elapsed < 12:
+        elif time_elapsed >=9 and time_elapsed < 12:
                 
                 if shoot:
                     if selected_option == Defense_options[0]:
@@ -207,7 +223,9 @@ def gameloop_screen(screen,Titlefont,Hfont, selected_gamemode, Bola_1, Bola_2, G
                     elif selected_option == Defense_options[2]:
                         Defense_positions = random.choice([(0, 2, 4), (1, 3, 5)])
 
+        
                     Random_shot = random.choice(goal_positions)
+                    Random_jump = random.choice([Goalee_left, Goalee_right])
                     target_position = (
                     Random_shot[0] + Random_shot[2] // 2 - Bola_1.get_width() // 2,  # Adjusted x-coordinate for ball centering
                     Random_shot[1] + Random_shot[3] // 2 - Bola_1.get_height() // 2  # Adjusted y-coordinate for ball centering
@@ -215,20 +233,19 @@ def gameloop_screen(screen,Titlefont,Hfont, selected_gamemode, Bola_1, Bola_2, G
 
                     blocked_positions = [goal_positions[i] for i in Defense_positions]
                     shoot = False
+
+                if Random_jump != None:
+                    screen.blit(Random_jump, jump_rect)
                     
                 draw_target_positions(screen, blocked_positions, WINE_RED_SEMITRANSPARENT)
 
-                if Random_shot[0]<461:
-                    screen.blit(Goalee_left, jump_rect)
-                
-                elif Random_shot[0]>=461:
-                    screen.blit(Goalee_right, jump_rect)
+
 
         #WHAT HAPPENS AFTER THE SHOT
 
         elif time_elapsed>=12 and time_elapsed<13:
 
-            if target_position is not None:
+            if target_position is not None and Random_shot is not None:
                 draw_target_positions(screen, blocked_positions, WINE_RED_SEMITRANSPARENT)
                 draw_target_positions(screen, [Random_shot], VIOLET_SEMITRANSPARENT)
                 # Calculate fractional part of elapsed time
@@ -242,13 +259,19 @@ def gameloop_screen(screen,Titlefont,Hfont, selected_gamemode, Bola_1, Bola_2, G
                 # Draw the ball sprite at the current position
                 screen.blit(Bola_1, current_pos)
 
-        elif time_elapsed <13.5:
+
+        elif time_elapsed>=13 and time_elapsed < 13.5:
             if Random_shot in blocked_positions:
                 # Display "Failed" text in the middle of the screen using Titlefont
                 failed_text = Titlefont.render("BLOCKED!", True, WINE_RED)
                 failed_text_rect = failed_text.get_rect(center=(HWIDTH//2, HHEIGHT // 2))
                 screen.blit(failed_text, failed_text_rect)
                 shot_result = "BLOCKED"
+                if shoot == False:
+                    cheer_sound.play()
+                    shoot = True
+                    internal_E_points = 0
+                
 
             elif Random_shot not in blocked_positions or selected_option == None:
                 # Display "Goal" text in the middle of the screen using Titlefont
@@ -256,7 +279,11 @@ def gameloop_screen(screen,Titlefont,Hfont, selected_gamemode, Bola_1, Bola_2, G
                 goal_text_rect = goal_text.get_rect(center=(HWIDTH//2, HHEIGHT // 2))
                 screen.blit(goal_text, goal_text_rect)
                 shot_result = "GOAL"
+                if shoot == False:
+                    boo_sound.play()
+                    shoot = True
+                    internal_E_points = 1
         
-        elif time_elapsed<14:
+        elif time_elapsed >= 13.5 and time_elapsed <14:
+            return ["switch", internal_P_points, internal_E_points]
             
-            print("Show public")

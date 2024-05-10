@@ -41,6 +41,7 @@ from Home_Screens.players_select import players_select_screen
 from Game_Screens.pregame import pregame_screen
 from Game_Screens.game_constants import game_constants_screen
 from Game_Screens.game_loop import gameloop_screen
+from Game_Screens.Stats import stats_screen
 #==================================================== HOME ASSET IMPORTS ==============================
 
 #Screen backgrounds
@@ -99,7 +100,6 @@ coin_gif = pygame.transform.scale(pygame.image.load("Assets/Sprites/Coin_animati
 corona = pygame.transform.scale(pygame.image.load("Assets/Sprites/Corona.gif").convert_alpha(), (300,300))
 escudo = pygame.transform.scale(pygame.image.load("Assets/Sprites/Escudo.gif").convert_alpha(), (300,300))
 Bola_1 = pygame.transform.scale(pygame.image.load("Assets/Sprites/Brazuka.png").convert_alpha(), (160,160))
-Bola_2 = pygame.transform.scale(pygame.image.load("Assets/Sprites/Brazuka_rotate.png").convert_alpha(), (160,160))
 Goalee=  pygame.transform.scale(pygame.image.load("Assets/Sprites/Stood_goalee.png").convert_alpha(), (162.5,235))
 Goalee_left= pygame.transform.scale(pygame.image.load("Assets/Sprites/Goal_keeper_left.png").convert_alpha(), (282,120))
 Goalee_right= pygame.transform.scale(pygame.image.load("Assets/Sprites/Goal_keeper_right.png").convert_alpha(), (282,120))
@@ -172,7 +172,7 @@ def update_top_scores(final_score):
 #====================================================== MAIN CODE ========================================
 
 def main():
-    global selected_index, current_screen, volume, music_playing, game_section, prev_game_section, seconds, selected_team, enemy_team, selected_gamemode, game_positions, final_player_list, game_position_index, players_selection_text, game_change_ready, data, prev_pot_value, volume_rect, volume_icon, first_enter, team_player_index, enemy_player_index, current_round, selected_option, shoot
+    global selected_index, current_screen, volume, music_playing, game_section, prev_game_section, seconds, selected_team, enemy_team, selected_gamemode, game_positions, final_player_list, game_position_index, players_selection_text, game_change_ready, data, prev_pot_value, volume_rect, volume_icon, first_enter, team_player_index, enemy_player_index, current_round, selected_option, shoot, turn_change, Shootturn, game_reset, Player_points, Enemy_points, Game_values_list
 
     while RUNNING:
         # Check Music Toggle Option
@@ -313,7 +313,7 @@ def main():
                     elif event.key == pygame.K_RETURN and game_change_ready:
                         current_screen = "PRE_GAME"
 
-                if current_screen == "MAIN_GAME" and not shoot:
+                if current_screen == "MAIN_GAME" or current_screen == "MAIN_GAME2" and not shoot:
                     if Shootturn == "YOU":
                         if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
                             selected_index = (selected_index + 1) % len(goal_positions)
@@ -322,7 +322,7 @@ def main():
                         elif event.key == pygame.K_RETURN:
                             selected_option = goal_positions[selected_index]
                             shoot = True
-
+                
                     if Shootturn == "ENEMY" and not shoot:
                         if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
                             selected_index = (selected_index + 1) % len(Defense_options)
@@ -383,8 +383,41 @@ def main():
                 selected_index = 0
         
         elif current_screen == "MAIN_GAME":
+            
             game_constants_screen(screen,Gfont,Nfont, Field_frontal, team_sprites, selected_team, enemy_team, selected_gamemode, final_player_list, enemy_player_list, Shootturn, team_player_index, enemy_player_index, current_round)
-            gameloop_screen(screen,Titlefont,Hfont, selected_gamemode,Bola_1, Bola_2, Goalee, Goalee_left, Goalee_right, Shootturn, seconds, current_round, selected_index, selected_option)
+            Game_values_list = gameloop_screen(screen,Titlefont,Hfont,Bola_1, Goalee, Goalee_left, Goalee_right, Shootturn, seconds, selected_index, selected_option, game_reset)
+            if Game_values_list != None:
+                
+                Player_points += Game_values_list[1]
+                Enemy_points += Game_values_list[2]
+                Game_values_list = []
+                selected_option = None
+                shoot = False
+                game_reset = True
+                first_enter = True
+                enemy_player_index = (enemy_player_index + 1) % len(enemy_player_list)
+                team_player_index= (team_player_index + 1) % len(final_player_list)
+
+                if Shootturn == "ENEMY": 
+                    Shootturn = "YOU"
+                else:
+                    Shootturn = "ENEMY"
+                current_screen = "MAIN_GAME2"
+
+        elif current_screen == "MAIN_GAME2":
+
+            game_constants_screen(screen,Gfont,Nfont, Field_frontal, team_sprites, selected_team, enemy_team, selected_gamemode, final_player_list, enemy_player_list, Shootturn, team_player_index, enemy_player_index, current_round)
+            Game_values_list= gameloop_screen(screen,Titlefont,Hfont, Bola_1, Goalee, Goalee_left, Goalee_right, Shootturn, seconds, selected_index, selected_option, game_reset)
+            game_reset = False
+            if Game_values_list !=None:
+                turn_change = Game_values_list [0]
+                Player_points += Game_values_list[1]
+                Enemy_points += Game_values_list[2]
+            if turn_change == "switch":
+                current_screen = "STATS_SCREEN"
+
+        elif current_screen == "STATS_SCREEN":
+            stats_screen(screen, Hfont, Mbackground, Field_frontal, current_round, seconds)
         # Update the display and cap the frame rate
         pygame.display.update()
         clock.tick(60)

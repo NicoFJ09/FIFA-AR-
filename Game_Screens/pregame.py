@@ -57,6 +57,7 @@ def pregame_screen(screen, Hfont, Field_drone, Field_lateral, Ubackground, coin_
                 screen.blit(text_surface, text_rect)
             
                 Firstplayer = "YOU"
+                
             else:
                 escudo_rect = corona.get_rect(center=(HWIDTH // 2, HHEIGHT // 2 + 50))
                 screen.blit(corona, escudo_rect)

@@ -91,6 +91,22 @@ Defense_options = ["3 lateral blocks", "2 lateral blocks", "3 separated blocks"]
 initial_ball_pos = (504,804)
 selected_option = None
 target_position = None
+Random_shot = None
+Random_jump = None
 blocked_positions= []
 shoot = False
 shot_result = ""
+Firstplayer = ""
+turn_change = None
+
+Rounds_counter= 0
+Turn_counter = 0
+game_reset= False
+
+Player_points = 0
+Enemy_points = 0
+
+internal_P_points = 0
+internal_E_points = 0
+
+Game_values_list = None

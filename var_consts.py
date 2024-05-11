@@ -17,6 +17,9 @@ VIOLET = (127, 0, 255)
 VIOLET_SEMITRANSPARENT = (127, 0, 255, 128)
 NAVY_BLUE = (0, 0, 128)
 OVERLAY_GRAY = (128,128,128,128)
+GREEN = (26, 140, 24)
+HOT_PINK = (255,105,180)
+RED = (255,0,0)
 
 #Screen dimensions
 HWIDTH=1200
@@ -54,6 +57,8 @@ enemy_team = ""
 
 Gamemode_options = ["MANUAL", "AUTOMATIC"]
 selected_gamemode = ""
+
+Top_players = [1, 2]
 
 game_position_index = 0
 final_player_list = []
@@ -110,3 +115,12 @@ internal_P_points = 0
 internal_E_points = 0
 
 Game_values_list = None
+
+Final_scores= []
+Final_scores_ENEMY = []
+
+stats_screen_list = []
+
+
+combined_list = []
+combined_list_ENEMY = []

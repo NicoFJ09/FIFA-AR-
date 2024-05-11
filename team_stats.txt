@@ -1,0 +1,6 @@
+Campeon, Total score, 0
+Campeon, Total fail, 25
+Morao, Total score, 15
+Morao, Total fail, 0
+LSD, Total score, 0
+LSD, Total fail, 0

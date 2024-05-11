@@ -26,10 +26,8 @@ def draw_target_positions(screen, blocked_positions, COLOR):
 
 def gameloop_screen(screen,Titlefont,Hfont, Bola_1, Goalee, Goalee_left, Goalee_right, Shootturn, seconds, selected_index, selected_option, game_reset):
     global first_enter, game_start_time, countdown_time, shoot, blocked_positions, target_position, shot_result, time_elapsed, Random_shot, Random_jump, internal_P_points, internal_E_points
-    
-
-
     if first_enter or game_reset:
+
         game_start_time = seconds
         first_enter =  False
         shoot = False
@@ -39,8 +37,7 @@ def gameloop_screen(screen,Titlefont,Hfont, Bola_1, Goalee, Goalee_left, Goalee_
         shot_result = ""
         internal_P_points = 0
         internal_E_points = 0
-        print("int P" ,internal_P_points, "Int E", internal_E_points)
-        
+    
     time_elapsed = seconds - game_start_time
 
     goalee_rect= Goalee.get_rect(center=(HWIDTH//2, HHEIGHT // 2))
@@ -186,7 +183,7 @@ def gameloop_screen(screen,Titlefont,Hfont, Bola_1, Goalee, Goalee_left, Goalee_
 
     # PRE DEFENSE PREPARATION 
         elif time_elapsed >= 5 and time_elapsed < 8.5:
-            Options_title = Hfont.render("SELECT YOUR DEFENSE PATTERN", True, OVERLAY_GRAY)
+            Options_title = Hfont.render("SELECT YOUR DEFENSE PATTERN", True, WINE_RED)
             Options_title_rect = Options_title.get_rect(center=(HWIDTH//2, 150))
             screen.blit(Goalee, goalee_rect)
             screen.blit(Options_title, Options_title_rect)
@@ -198,7 +195,7 @@ def gameloop_screen(screen,Titlefont,Hfont, Bola_1, Goalee, Goalee_left, Goalee_
 
             for i, option in enumerate(Defense_options):
                 # Render the text using the Titlefont
-                option_text = Hfont.render(option, True, WINE_RED if selected_index == i and shoot== False else OVERLAY_GRAY)
+                option_text = Hfont.render(option, True, HOT_PINK if selected_index == i and shoot== False else WINE_RED)
                 # Get the rectangle for the rendered text
                 option_rect = option_text.get_rect()
                 # Set the top-left corner of the rectangle to the current coordinates

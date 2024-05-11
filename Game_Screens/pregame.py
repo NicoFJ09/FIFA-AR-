@@ -1,4 +1,4 @@
-import pygame as pg
+import pygame
 from var_consts import *
 import random
 
@@ -6,7 +6,7 @@ import random
 text_choice = random.choice(["Escudo: Tu turno", "Corona: Turno del contrincante"])
 
 def pregame_screen(screen, Hfont, Field_drone, Field_lateral, Ubackground, coin_gif, corona, escudo, seconds):
-    global first_enter, Main_game_time, text_choice
+    global first_enter, Main_game_time, text_choice, time_elapsed
     if first_enter:
         Main_game_time = seconds
         first_enter = False
